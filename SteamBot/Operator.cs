@@ -45,7 +45,7 @@ namespace SteamBot
                 return true;
             }
             Log.Warn("Random SteamID: " + OtherSID + " tried to add the bot as a friend");
-           return true;
+           return false;
         }
         
         public override void OnFriendRemove()
