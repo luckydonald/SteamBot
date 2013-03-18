@@ -53,6 +53,17 @@ namespace SteamBot
         }
 
         /// <summary>
+        /// Gets a value indicating whether the other user is operator.
+        /// </summary>
+        /// <value>
+        /// <c>true</c> if the other user is a configured operator; otherwise, <c>false</c>.
+        /// </value>
+        protected bool IsOperator
+        {
+            get { return Bot.Operators.Contains (OtherSID); } //FIXME: Maybe something else.
+        }
+
+        /// <summary>
         /// Called when the user adds the bot as a friend.
         /// </summary>
         /// <returns>

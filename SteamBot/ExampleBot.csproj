@@ -54,6 +54,9 @@
     <Compile Include="Program.cs" />
     <Compile Include="UserHandler.cs" />
     <Compile Include="SimpleUserHandler.cs" />
+    <Compile Include="Operator.cs" />
+    <Compile Include="CustomUserHandler.cs" />
+    <Compile Include="Messages.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -68,6 +71,10 @@
     <ProjectReference Include="..\SteamTrade\SteamTrade.csproj">
       <Project>{6CEC0333-81EB-40EE-85D1-941363626FC7}</Project>
       <Name>SteamTrade</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Lib\protobuf-net\protobuf-net\protobuf-net.csproj">
+      <Project>{8374E4D7-2A91-48F1-9360-09B09CF27C3F}</Project>
+      <Name>protobuf-net</Name>
     </ProjectReference>
   </ItemGroup>
 </Project>

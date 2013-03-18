@@ -15,28 +15,32 @@ namespace SteamBot
                 Log mainLog = new Log(config.MainLog, null);
                 foreach (Configuration.BotInfo info in config.Bots)
                 {
-                    mainLog.Info("Launching Bot " + info.DisplayName + "...");
-                    new Thread(() =>
-                    {
-                        int crashes = 0;
-                        while (crashes < 1000)
+                    if(info.Disabled){
+                        mainLog.Warn("Skipping Disabled Bot " + info.DisplayName + "!!!");
+                    }else{
+                        mainLog.Info("Launching Bot " + info.DisplayName + "...");
+                        new Thread(() =>
                         {
-                            try
+                            int crashes = 0;
+                            while (crashes < 1000)
                             {
-                                new Bot(info, config.ApiKey, (Bot bot, SteamID sid) => {
-                                    
-                                    return (SteamBot.UserHandler)System.Activator.CreateInstance(Type.GetType(bot.BotControlClass), new object[] { bot, sid });  
-                                }, false);
+                                try
+                                {
+                                    new Bot(info, config.ApiKey, (Bot bot, SteamID sid) => {
+                                        
+                                        return (SteamBot.UserHandler)System.Activator.CreateInstance(Type.GetType(bot.BotControlClass), new object[] { bot, sid });  
+                                    }, false);
 
+                                }
+                                catch (Exception e)
+                                {
+                                    mainLog.Error("Error With Bot: " + e);
+                                    crashes++;
+                                }
                             }
-                            catch (Exception e)
-                            {
-                                mainLog.Error("Error With Bot: " + e);
-                                crashes++;
-                            }
-                        }
-                    }).Start();
-                    Thread.Sleep(5000);
+                        }).Start();
+                        Thread.Sleep(5000);
+                    }
                 }
             }
             else

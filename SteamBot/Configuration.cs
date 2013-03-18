@@ -2,6 +2,8 @@ using System;
 using System.IO;
 using System.Linq;
 using Newtonsoft.Json;
+using System.Collections.Generic;
+using SteamKit2;
 
 namespace SteamBot
 {
@@ -29,11 +31,14 @@ namespace SteamBot
                 {
                     bot.Admins = bot.Admins.Concat(config.Admins).ToArray();
                 }
+                if(bot.Disabled){
+
+                }
             }
 
             return config;
         }
-
+        public static List<SteamID> BotIDs { get; set; }
         public ulong[] Admins { get; set; }
         public BotInfo[] Bots { get; set; }
         public string ApiKey { get; set; }
@@ -41,6 +46,7 @@ namespace SteamBot
 
         public class BotInfo
         {
+            public bool Disabled { get; set; }
             public string Username { get; set; }
             public string Password { get; set; }
             public string DisplayName { get; set; }

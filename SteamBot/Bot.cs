@@ -27,6 +27,8 @@ namespace SteamBot
 
         // A list of SteamIDs that this bot recognizes as admins.
         public ulong[] Admins;
+        // A list of SteamIDs that this bot recognizes as operator.
+        public ulong[] Operators;
         public SteamFriends SteamFriends;
         public SteamClient SteamClient;
         public SteamTrading SteamTrade;
