@@ -11,7 +11,7 @@ namespace SteamBot
         {
             if (System.IO.File.Exists("settings.json"))
             {
-                Configuration config = Configuration.LoadConfiguration("settings.json");
+                Configuration config = Configuration.LoadConfiguration("settings1.json");
                 Log mainLog = new Log(config.MainLog, null);
                 foreach (Configuration.BotInfo info in config.Bots)
                 {

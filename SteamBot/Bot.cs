@@ -89,6 +89,7 @@ namespace SteamBot
             DisplayNamePrefix = config.DisplayNamePrefix;
             TradePollingInterval = config.TradePollingInterval <= 100 ? 800 : config.TradePollingInterval;
             Admins       = config.Admins;
+            Operators       = config.Operators;
             this.apiKey  = apiKey;
             try
             {
@@ -113,7 +114,9 @@ namespace SteamBot
             SteamFriends = SteamClient.GetHandler<SteamFriends>();
             log.Info ("Connecting...");
             SteamClient.Connect();
-            
+
+
+
             Thread CallbackThread = new Thread(() => // Callback Handling
             {
                 while (true)
@@ -125,8 +128,15 @@ namespace SteamBot
             }); 
             
             CallbackThread.Start();
+
+           /* Configuration.theBots.Add (this);
+            Configuration.theBotIDs.Add(this.SteamUser.SteamID);
+            this.log.Success ("Steam ID recieved: '" + this.SteamUser.SteamID + "'!");
+            */
+
             log.Success ("Done Loading Bot!");
             CallbackThread.Join();
+
         }
 
         /// <summary>
@@ -288,7 +298,13 @@ namespace SteamBot
                 SteamFriends.SetPersonaName (DisplayNamePrefix+DisplayName);
                 SteamFriends.SetPersonaState (EPersonaState.Online);
 
+                Configuration.theBots.Add (this);
+                Configuration.theBotIDs.Add(this.SteamClient.SteamID);
+                log.Success ("Steam ID recieved: '" + this.SteamClient.SteamID + "'!");
+
                 log.Success ("Steam Bot Logged In Completely!");
+                //Configuration.theBots.Add (this.SteamUser.SteamID);
+
 
                 IsLoggedIn = true;
             });
@@ -393,6 +409,7 @@ namespace SteamBot
                 if (callback.Response == EEconTradeResponse.Accepted)
                 {
                     log.Info ("Trade Accepted!");
+
                 }
                 if (callback.Response == EEconTradeResponse.Cancel ||
                     callback.Response == EEconTradeResponse.ConnectionFailed ||

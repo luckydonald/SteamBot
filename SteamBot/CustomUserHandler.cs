@@ -10,27 +10,11 @@ namespace SteamBot
     /// </summary>
     public class CustomUserHandler : UserHandler
     {
-        private const string AddCmd = "add";
-        private const string RemoveCmd = "remove";
-        private const string AddCratesSubCmd = "crates";
-        private const string AddWepsSubCmd = "weapons";
-        private const string AddMetalSubCmd = "metal";
-        private const string AllSubCmd = "all";
-        private const string HelpCmd = "help";
-        private const string AdminCallCmd = "admin";
-        private const string MsgShortCmd = "/msg";
-        private const string MsgLongCmd = "!msg";
-        private const string MsgLastCmd = "msg";
+
         private SteamID lastSID;
         
-        
-        public CustomUserHandler(Bot bot, SteamID sid)
-            : base(bot, sid)
-        {
-            Configuration.BotIDs.Add (bot.SteamUser.SteamID);
-            Log.Info ("Steam ID recieved: '" + sid + "'!");
-        }
-        
+
+        public CustomUserHandler (Bot bot, SteamID sid) : base(bot, sid) {}
         #region Overrides of UserHandler
         
         /// <summary>
@@ -91,16 +75,13 @@ namespace SteamBot
                                                   Bot.CurrentTrade.OtherSID + " - To add him just click steam://friends/add/7656" + (Bot.CurrentTrade.OtherSID + 1197960265728) + " ."
                                                   );
                 
-            }
-            if (message == "who am i")
+            }else if (message == "who am i")
             {
                 Bot.SteamFriends.SendChatMessage (OtherSID, 
                                                   EChatEntryType.ChatMsg,
                                                   OtherSID + " or steam://friends/add/7656" + (OtherSID + 1197960265728) + " ."
                                                   );
-            }
-            
-            if (message == "admin wanna help")
+            }else if (message == "admin wanna help")
             {
                 if(!IsAdmin)
                     return;
@@ -127,22 +108,22 @@ namespace SteamBot
                                                   EChatEntryType.ChatMsg,
                                                   "Trader Has Been Notified."
                                                   );
-            }
-            if (message.StartsWith(MsgShortCmd) || message.StartsWith(MsgLongCmd))
+            }else if (message.StartsWith(Messages.MsgShortCmd) || message.StartsWith(Messages.MsgLongCmd))
                 HandleMsgCommand(message);
-            if (message.StartsWith(MsgLastCmd))
+            else if (message.StartsWith(Messages.MsgLastCmd))
                 HandleReplyMsgCommand(message);
-            if (message.Contains(Messages.CollectorRequestMsg)&&(IsOperator||IsAdmin)){
+            else if (message.Contains(Messages.CollectorRequestMsg)&&(IsOperator||IsAdmin)){
                 if (Bot.CurrentTrade != null)
                     this.Bot.CurrentTrade.CancelTrade();
-                this.Bot.OpenTrade(OtherSID);
+                //this.Bot.OpenTrade(OtherSID);
+                this.Bot.SteamTrade.Trade(OtherSID);
                 Bot.SteamFriends.SendChatMessage (OtherSID, 
                                                   EChatEntryType.ChatMsg,
-                                                  "Trader Has Been Notified."
+                                                  "Go on Collector."
                                                   );
                 Log.Info("Triggered Comand: "+Messages.CollectorRequestMsg);
             }else{
-                Log.Info("Not Triggered Comand: '"+Messages.CollectorCollectMsg + "' instead got '"+message+"'. ("+IsOperator+"|"+IsAdmin+")");
+                Log.Info("Not Triggered Comand: '"+Messages.CollectorRequestMsg + "' instead got '"+message+"'. ("+IsOperator+"|"+IsAdmin+")");
             }
         }
         
@@ -154,10 +135,10 @@ namespace SteamBot
             try
             {
                 String msgCommand = "";
-                if (message.StartsWith (MsgShortCmd))
-                    msgCommand = MsgShortCmd;
+                if (message.StartsWith (Messages.MsgShortCmd))
+                    msgCommand = Messages.MsgShortCmd;
                 else //if (message.StartsWith(MsgLongCmd)
-                    msgCommand = MsgLongCmd;
+                    msgCommand = Messages.MsgLongCmd;
                 
                 string steamID;
                 message = message.Substring (msgCommand.Length + 1); //+1 or not? //,message.Length-MsgShortCmd.Length-1
@@ -167,9 +148,9 @@ namespace SteamBot
                 
                 SteamID id;
                 id = OtherSID;
-                if (msgCommand == MsgShortCmd)
+                if (msgCommand == Messages.MsgShortCmd)
                     id = new SteamID (steamID);
-                else if (msgCommand == MsgLongCmd)
+                else if (msgCommand == Messages.MsgLongCmd)
                 {
                     ulong SID;
                     if (ulong.TryParse (steamID, out SID))
@@ -205,7 +186,7 @@ namespace SteamBot
             {
                 
                 
-                message = message.Substring (MsgLastCmd.Length + 1);          
+                message = message.Substring (Messages.MsgLastCmd.Length + 1);          
                 Bot.SteamFriends.AddFriend (lastSID);
                 Bot.SteamFriends.SendChatMessage (lastSID, 
                                                   EChatEntryType.ChatMsg,
@@ -230,15 +211,15 @@ namespace SteamBot
         /// </returns>
         public override bool OnTradeRequest()
         {
-            Bot.SteamFriends.SendChatMessage (OtherSID, 
+            /*Bot.SteamFriends.SendChatMessage (OtherSID, 
                                               EChatEntryType.ChatMsg,
                                               "Hey, you are" + (!IsAdmin?"n't":"") + " Admin."
                                               );
             Bot.SteamFriends.SendChatMessage (OtherSID, 
                                               EChatEntryType.Typing,
                                               ""
-                                              );
-            
+                                              );*/
+
             Log.Info (String.Format ("Trade Requested from {0}",
                                      Bot.SteamFriends.GetFriendPersonaName(OtherSID)
                                      ));
@@ -260,7 +241,8 @@ namespace SteamBot
         
         public override void OnTradeInit()
         {
-            Trade.SendMessage("Success. (Type " + HelpCmd + " for commands.)");
+            Trade.SendMessage(Messages.TradeSuccessLoading);
+            Log.Success("Custom:"+Messages.TradeSuccessLoading);
         }
         
         public override void OnTradeAddItem(Schema.Item schemaItem, Inventory.Item inventoryItem)
@@ -285,20 +267,22 @@ namespace SteamBot
         
         public override void OnTradeReady(bool ready)
         {
-            if (!IsAdmin)
+            Log.Info("OnTradeReady:" + ready);
+            if ((!IsAdmin)&&(!IsOperator))
             {
                 Trade.SendMessage("You are not my master.");
                 Trade.SetReady(false);
-                Log.Info (String.Format ("Trade Ready-ed from {0}: {1}",
+                Log.Info (String.Format ("Trade De-Ready-ed from {0}",
                                          Bot.SteamFriends.GetFriendPersonaName(OtherSID)
                                          ));
                 return;
             }
-            
-            Trade.SetReady(true);
-            Log.Info (String.Format ("Trade Ready accepted.  {0}: {1}",
+
+            Log.Info (String.Format ("Trade Ready accepted.  {0}",
                                      Bot.SteamFriends.GetFriendPersonaName(OtherSID)
                                      ));
+            Trade.SetReady(true);
+
         }
         
         public override void OnTradeAccept()
@@ -315,6 +299,8 @@ namespace SteamBot
                 {
                     Log.Warn("Trade might have failed.");
                 }
+            }else{
+                Log.Info("User tried Accept, but has no Priveleges.");
             }
         }
         
@@ -326,20 +312,24 @@ namespace SteamBot
                                      Bot.SteamFriends.GetFriendPersonaName(OtherSID),
                                      message
                                      ));
-            if (message.Equals(HelpCmd))
+            if (message.Equals(Messages.HelpCmd))
             {
                 PrintHelpMessage();
                 return;
             }
-            if (message.Equals(AdminCallCmd))
+            if (message.Equals(Messages.AdminCallCmd))
             {
                 CallAdmin();
                 return;
             }
-            
-            if (message.StartsWith(AddCmd))
+            if(message.Equals(Messages.TradeSuccessLoading)){
+                Trade.SendMessage(Messages.YouSaid + Messages.TradeSuccessLoading);
+                Log.Success("Custom_Recieved " +Messages.TradeSuccessLoading);
+                Bot.CurrentTrade.SendMessage("teast");
+            }
+            if (message.StartsWith(Messages.AddCmd))
                 HandleAddCommand(message);
-            else if (message.StartsWith(RemoveCmd))
+            else if (message.StartsWith(Messages.RemoveCmd))
                 HandleRemoveCommand(message);
         }
         
@@ -371,8 +361,8 @@ namespace SteamBot
             Trade.SendMessage(String.Format("{0} {1} - adds all weapons", Messages.AddCmd, Messages.AddWepsSubCmd));
             Trade.SendMessage(String.Format("{0} {1} - adds all all. yep.", Messages.AddCmd, Messages.AddAllSubCmd));
             
-            Trade.SendMessage(String.Format(@"{0} <craft_material_type> [amount] - adds all or a given amount of items of a given crafing type.", AddCmd));
-            Trade.SendMessage(String.Format(@"{0} <defindex> [amount] - adds all or a given amount of items of a given defindex.", AddCmd));
+            Trade.SendMessage(String.Format(@"{0} <craft_material_type> [amount] - adds all or a given amount of items of a given crafing type.", Messages.AddCmd));
+            Trade.SendMessage(String.Format(@"{0} <defindex> [amount] - adds all or a given amount of items of a given defindex.", Messages.AddCmd));
             Trade.SendMessage(@"See http://wiki.teamfortress.com/wiki/WebAPI/GetSchema for info about craft_material_type or defindex.");
         }
         
@@ -408,7 +398,7 @@ namespace SteamBot
                 AddItemsByCraftType("supply_crate", amount);
                 break;
             case Messages.AddAllSubCmd:
-                AddAllItems(amount);
+                AddItemsByAll(amount);
                 break;
             default:
                 AddItemsByCraftType(typeToAdd, amount);
@@ -448,31 +438,27 @@ namespace SteamBot
                     return;
             }
             Trade.SendMessage ("Done.");
-            if (IsAdmin /*|| IsOtherBots */|| IsOperator)
-            {
-                Bot.CurrentTrade.SetReady(true);
-                Trade.SendMessage ("Ready.");
-                
-            }
         }
-        public uint AddAllItems (uint numToAdd = 0)
+        private void AddItemsByAll(uint amount)
         {
+            Trade.SendMessage ("Adding all items with ALL");
+            var items = Trade.CurrentSchema.Items;
+            
             uint added = 0;
-            foreach (Inventory.Item item in Trade.MyInventory.Items)
+            
+            foreach (var item in items)
             {
-                if (item != null)
-                {
-                    bool success = Trade.AddItem(item.Id);
-                    if (success)
-                        added++;
-                    
-                    if (numToAdd > 0 && added >= numToAdd)
-                        return added;
-                }
+                added += Trade.AddAllItemsByDefindex(item.Defindex, amount);
+                
+                // if bulk adding something that has a lot of unique
+                // defindex (weapons) we may over add so limit here also
+                if (amount > 0 && added >= amount)
+                    return;
             }
-            return added;
+            Trade.SendMessage (Messages.AddingDoneMsg);
+
         }
-        
+
         bool GetSubCommand (string[] data, out string subCommand)
         {
             if (data.Length < 2)

@@ -20,6 +20,13 @@ namespace SteamBot
         public const string CollectorCollectMsg = "!collect";
         public const string CollectorRequestMsg = "#collector_request";
         public const string CollectorGiveAllMsg = "#collector_give_all";
+
+
+        public const string TradeSuccessLoading = "Got your Inventory. Let's Go!";
+        public const string AddingDoneMsg = "Done.";
+        public const string TradeReadyMsg = "Ready.";
+        public const string YouSaid = "You Said:";
+
         
         
         public Messages ()

@@ -57,6 +57,8 @@
     <Compile Include="Operator.cs" />
     <Compile Include="CustomUserHandler.cs" />
     <Compile Include="Messages.cs" />
+    <Compile Include="TradeStati.cs" />
+    <Compile Include="SharedVars.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

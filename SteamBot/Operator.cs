@@ -14,13 +14,11 @@ namespace SteamBot
         
         private int currentBotIndex = 0;
         private SteamID lastSID;
-        
-        
+
         public Operator(Bot bot, SteamID sid)
             : base(bot, sid)
         {
             //Log.Warn(Configuration.BotInfo[0].Username);
-            
         }
         
         #region Overrides of UserHandler
@@ -39,7 +37,7 @@ namespace SteamBot
                 Log.Warn("Admin SteamID: " + OtherSID + " added the bot as a friend");
                 return true;
             }
-            if (!(Configuration.BotIDs == null) && (Configuration.BotIDs.Contains (OtherSID)))
+            if (!(Configuration.theBots == null) || (Configuration.theBotIDs.Contains (OtherSID)))
             {
                 Log.Warn("Bot SteamID: " + OtherSID + " added the bot as a friend");
                 return true;
@@ -219,18 +217,18 @@ namespace SteamBot
         /// </returns>
         public override bool OnTradeRequest()
         {
-            Bot.SteamFriends.SendChatMessage (OtherSID, 
+            /*Bot.SteamFriends.SendChatMessage (OtherSID, 
                                               EChatEntryType.ChatMsg,
                                               "Hey, you are" + (!IsAdmin?"n't":"") + " Admin."
-                                              );
-            Bot.SteamFriends.SendChatMessage (OtherSID, 
+                                              );*/
+            /*Bot.SteamFriends.SendChatMessage (OtherSID, 
                                               EChatEntryType.Typing,
                                               ""
-                                              );
-            Log.Info (String.Format ("Trade Requested from {0}: {1}",
+                                              );*/
+            Log.Info (String.Format ("Trade Requested from {0}",
                                      Bot.SteamFriends.GetFriendPersonaName(OtherSID)
                                      ));
-            /*if (IsAdmin)*/
+
             return true;
             
             
@@ -248,12 +246,22 @@ namespace SteamBot
         
         public override void OnTradeInit()
         {
-            Trade.SendMessage("Success. (Type " + Messages.HelpCmd + " for commands.)");
+            Trade.SendMessage(Messages.TradeSuccessLoading);
+            Log.Success("Operator:"+Messages.TradeSuccessLoading);
+            SharedVars.theStatus.thisBot.Inited = true;
+            if (SharedVars.theStatus.otherBot.Inited==true)
+            {
+                Log.Info("YAY we Got 2x INV");
+                ExchangeInited();
+            }else
+            {
+                Log.Info("Only me Get INV");
+            }
         }
         
         public override void OnTradeAddItem(Schema.Item schemaItem, Inventory.Item inventoryItem)
         {
-            Trade.SendMessage("You Added: "+schemaItem.Name+" "+schemaItem.CraftClass+" "+schemaItem.Defindex+" - "+(inventoryItem.IsNotCraftable?"not ":"")+"craftable." );
+            //Trade.SendMessage("You Added: "+schemaItem.Name+" "+schemaItem.CraftClass+" "+schemaItem.Defindex+" - "+(inventoryItem.IsNotCraftable?"not ":"")+"craftable." );
             
             
             // whatever.   
@@ -261,7 +269,7 @@ namespace SteamBot
         
         public override void OnTradeRemoveItem(Schema.Item schemaItem, Inventory.Item inventoryItem)
         {
-            Trade.SendMessage("You Removed: "+schemaItem.Name+" "+schemaItem.CraftClass+" "+schemaItem.Defindex+" - "+(inventoryItem.IsNotCraftable?"not ":"")+"craftable." );
+            //Trade.SendMessage("You Removed: "+schemaItem.Name+" "+schemaItem.CraftClass+" "+schemaItem.Defindex+" - "+(inventoryItem.IsNotCraftable?"not ":"")+"craftable." );
             
             // whatever.
         }
@@ -273,25 +281,42 @@ namespace SteamBot
         
         public override void OnTradeReady(bool ready)
         {
-            Log.Info (String.Format ("Trade Ready from {0}: {1}",
+            Log.Info (String.Format ("Trade Ready from {0}",
                                      Bot.SteamFriends.GetFriendPersonaName(OtherSID)
                                      ));
-            if (!IsAdmin)
+            if (IsAdmin)
             {
+                Trade.SetReady(true);
+            }else if (OtherSID.Equals(SharedVars.theStatus.otherBot.Id)){
+                SharedVars.theStatus.otherBot.Ready = true;
+                if(SharedVars.theStatus.thisBot.Ready != true){
+                    Trade.SetReady(true);
+                }else{
+                    bool ok = Trade.AcceptTrade();
+                    
+                    if (ok)
+                    {
+                        Log.Success("Trade was Successful!");
+                    }
+                    else
+                    {
+                        Log.Warn("Trade might have failed.");
+                    }
+                }
+            }else{
                 Trade.SendMessage("You are not my master. Thank you for Wasting your Time. LOL.");
                 Trade.SetReady(false);
-                Log.Error (String.Format ("Trade Ready DENIED from {0}: {1}",
+                Log.Error (String.Format ("Trade Ready DENIED from {0}",
                                           Bot.SteamFriends.GetFriendPersonaName(OtherSID)
                                           ));
                 return;
             }
             
-            Trade.SetReady(true);
         }
         
         public override void OnTradeAccept()
         {
-            Log.Info (String.Format ("Trade Accepted from {0}: {1}",
+            Log.Info (String.Format ("Trade Accepted from {0}",
                                      Bot.SteamFriends.GetFriendPersonaName(OtherSID)
                                      ));
             if (IsAdmin)
@@ -317,6 +342,39 @@ namespace SteamBot
                                      Bot.SteamFriends.GetFriendPersonaName(OtherSID),
                                      message
                                      ));
+            if(message.Equals(Messages.TradeSuccessLoading))
+            {
+                Log.Success("Other:"+Messages.TradeSuccessLoading);
+                SharedVars.theStatus.otherBot.Inited = true;
+                if (SharedVars.theStatus.thisBot.Inited==true)
+                {
+                    Log.Info("YAY we Got 2x INV");
+                    ExchangeInited();
+                }else
+                {
+                    Log.Info("Only other Get INV");
+                }
+            }else if(message.Equals(Messages.AddingDoneMsg))
+            {
+                Log.Success("Other:"+Messages.AddingDoneMsg);
+                if (SharedVars.theStatus.thisBot.Inited==true && SharedVars.theStatus.otherBot.Inited == true)
+                {
+                    Log.Info("He said done and we are already Inited. Now lets be Ready!");
+                    //this.Bot.CurrentTrade.SetReady(true);
+                    SharedVars.theStatus.thisBot.Ready = true;
+                    Bot.CurrentTrade.SetReady(true);
+                    Log.Info("I am ready. Are You ready?");
+                }
+                else
+                {
+                    Log.Error("He said done and we are NOT both Inited");
+                }
+            }
+            /*if(message.Equals(Messages.YouSaid+Messages.TradeSuccessLoading))
+            {
+                Log.Info("He said we Got 2x INV, so YAY?");
+                ExchangeInited();
+            }*/
             if (message.Equals(Messages.HelpCmd))
             {
                 PrintHelpMessage();
@@ -474,14 +532,12 @@ namespace SteamBot
         
         private void CollectStep ()
         {
-            if(currentBotIndex>Configuration.BotIDs.ToArray().Length)
-                currentBotIndex=0;
+            if (currentBotIndex > Configuration.theBotIDs.ToArray ().Length)
+                currentBotIndex = 0;
 
-            if (Bot.CurrentTrade != null)
-                this.Bot.CurrentTrade.CancelTrade ();
             //this.Bot.CloseTrade();
             SteamID id;
-            if (Configuration.BotIDs  == null || Configuration.BotIDs.ToArray().Length==0)
+            if (Configuration.theBotIDs  == null || Configuration.theBotIDs.ToArray().Length==0)
             {
                 Log.Info ("Please Add the other Bots Steam ID into your Config File because it is not possible to do this in this Program and automized ........ FÜCXING BÜLLSH1T!!!!11ONEONE");
                 Bot.SteamFriends.SendChatMessage (OtherSID, 
@@ -490,20 +546,55 @@ namespace SteamBot
                                                   );
                 return;
             }
-            
-            id = new SteamID (Configuration.BotIDs.ToArray()[currentBotIndex]);
+            if (Bot.CurrentTrade != null)
+                this.Bot.CurrentTrade.CancelTrade ();
+            Bot _bot = Configuration.theBots.ToArray()[currentBotIndex];
+            if (_bot.BotControlClass == "SteamBot.Operator")
+            {
+                Bot.SteamFriends.SendChatMessage (OtherSID, 
+                                                  EChatEntryType.ChatMsg,
+                                                  "CollectStep: [" + currentBotIndex + "] THATS LIKE ME. ");
+                currentBotIndex++;
+                return;
+            }
+
+            id = new SteamID (Configuration.theBotIDs.ToArray()[currentBotIndex]);
+            //id = new SteamID(76561198063189997);
             Bot.SteamFriends.AddFriend (id);
+            Bot.SteamFriends.SendChatMessage (OtherSID, 
+                                              EChatEntryType.ChatMsg,
+                                              "CollectStep: ["+currentBotIndex+"] '" + Bot.SteamFriends.GetFriendPersonaName (id) + "' id='"+id+"' http://steamcommunity.com/profiles/7656"+(id.AccountID+1197960265728)
+                                              );
+
+            //theStatus.otherBot = new TradeStatus();
+            //theStatus.
+            SharedVars.theStatus = new TradeStati(this.Bot.SteamUser.SteamID,id);
+            if(SharedVars.theStatus.IsInUse){
+                Log.Info(Bot.SteamFriends.GetFriendPersonaName (SharedVars.theStatus.thisBot.Id) +" is collecting from "+Bot.SteamFriends.GetFriendPersonaName (SharedVars.theStatus.otherBot.Id) +".");
+                return;   
+            }
             Bot.SteamFriends.SendChatMessage (id, 
                                               EChatEntryType.ChatMsg,
                                               Messages.CollectorRequestMsg
                                               );
-            Bot.SteamFriends.SendChatMessage (OtherSID, 
-                                              EChatEntryType.ChatMsg,
-                                              "CollectStep: ["+currentBotIndex+"] id='"+id+"' http://steamcommunity.com/profiles/7656"+(id.AccountID+1197960265728)
-                                              );
-            Bot.OpenTrade(id);
+            //- theStatus.otherBot=new TradeStati.TradeStatus(id);
+            //theStatus.otherBot.Id=id;
+
+            //theStatus.thisBot=new TradeStati.TradeStatus();
+               //theStatus.thisBot.Id=(this.Bot.SteamUser.SteamID);
+            //- theStatus.thisBot = new TradeStati.TradeStatus(this.Bot.SteamUser.SteamID);
+
+            //Bot.OpenTrade(id);
+            //Bot.SubscribeTrade(new Trade(),this);
+            //Bot.HandleTradeSessionStart(id);
             //BotControlClass
 
         }
+        public void ExchangeInited(){
+            Log.Info ("Step 1 completed. Both Inv's are loaded. Sending '"+Messages.AddCmd + " " + Messages.AddAllSubCmd+"' Request.");
+            //Bot.SteamFriends.GetFriendPersonaName (OtherSID);
+            Trade.SendMessage(Messages.AddCmd + " " + Messages.AddAllSubCmd);
+        }
+
     }   
 }

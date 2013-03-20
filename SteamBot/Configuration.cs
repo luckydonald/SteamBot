@@ -31,15 +31,30 @@ namespace SteamBot
                 {
                     bot.Admins = bot.Admins.Concat(config.Admins).ToArray();
                 }
-                if(bot.Disabled){
-
+            }
+            // merge bot-specific operators with global operators
+            foreach (BotInfo bot in config.Bots)
+            {
+                if (bot.Operators == null)
+                {
+                    bot.Operators = new ulong[config.Operators.Length];
+                    Array.Copy(config.Operators, bot.Operators, config.Operators.Length);
+                }
+                else
+                {
+                    bot.Operators = bot.Operators.Concat(config.Operators).ToArray();
                 }
             }
+            theBots = new List<Bot> ();
+            theBotIDs = new List<SteamID> ();
+
 
             return config;
         }
-        public static List<SteamID> BotIDs { get; set; }
+        public static List<SteamID> theBotIDs { get; set; }
+        public static List<Bot> theBots { get; set; }
         public ulong[] Admins { get; set; }
+        public ulong[] Operators { get; set; }
         public BotInfo[] Bots { get; set; }
         public string ApiKey { get; set; }
         public string MainLog { get; set; }
@@ -59,6 +74,7 @@ namespace SteamBot
             public int TradePollingInterval { get; set; }
             public string LogLevel { get; set; }
             public ulong[] Admins;
+            public ulong[] Operators;
         }
     }
 }

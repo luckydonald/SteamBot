@@ -17,6 +17,10 @@ namespace SteamBot
         {
             Bot = bot;
             OtherSID = sid;
+            /*Configuration.theBots.Add (bot);
+            Configuration.theBotIDs.Add(sid);
+            Log.Success ("Steam ID recieved: '" + sid + "'!");*/
+
         }
 
         /// <summary>
