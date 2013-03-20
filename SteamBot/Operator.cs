@@ -289,15 +289,19 @@ namespace SteamBot
                 Trade.SetReady(true);
             }else if (OtherSID.Equals(SharedVars.theStatus.otherBot.Id)){
                 SharedVars.theStatus.otherBot.Ready = true;
-                if(SharedVars.theStatus.thisBot.Ready != true){
+                Log.Info (String.Format ("{0} is my Partner.",
+                                         Bot.SteamFriends.GetFriendPersonaName(OtherSID)
+                                         ));
+                if(!Trade.MeIsReady){
                     Trade.SetReady(true);
-                }else{
+                }
+                if(Trade.MeIsReady){
                     bool ok = Trade.AcceptTrade();
                     
                     if (ok)
                     {
                         Log.Success("Trade was Successful!");
-                    }
+                    }   
                     else
                     {
                         Log.Warn("Trade might have failed.");
@@ -332,6 +336,8 @@ namespace SteamBot
                     Log.Warn("Trade might have failed.");
                 }
             }
+            SharedVars.theStatus.thisBot.Inited=false;
+            SharedVars.theStatus.otherBot.Inited=false;
         }
         
         #endregion
@@ -357,17 +363,19 @@ namespace SteamBot
             }else if(message.Equals(Messages.AddingDoneMsg))
             {
                 Log.Success("Other:"+Messages.AddingDoneMsg);
-                if (SharedVars.theStatus.thisBot.Inited==true && SharedVars.theStatus.otherBot.Inited == true)
+                if ((SharedVars.theStatus.thisBot.Inited==true) && (SharedVars.theStatus.otherBot.Inited == true))
                 {
                     Log.Info("He said done and we are already Inited. Now lets be Ready!");
                     //this.Bot.CurrentTrade.SetReady(true);
-                    SharedVars.theStatus.thisBot.Ready = true;
+                    //SharedVars.theStatus.thisBot.Ready = true;
                     Bot.CurrentTrade.SetReady(true);
                     Log.Info("I am ready. Are You ready?");
                 }
                 else
                 {
                     Log.Error("He said done and we are NOT both Inited");
+                    Trade.SetReady(false);
+
                 }
             }
             /*if(message.Equals(Messages.YouSaid+Messages.TradeSuccessLoading))

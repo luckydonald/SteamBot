@@ -267,7 +267,7 @@ namespace SteamBot
         
         public override void OnTradeReady(bool ready)
         {
-            Log.Info("OnTradeReady:" + ready);
+            Log.Info("OnTradeReady:" + ready.ToString());
             if ((!IsAdmin)&&(!IsOperator))
             {
                 Trade.SendMessage("You are not my master.");

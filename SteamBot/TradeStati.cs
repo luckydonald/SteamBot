@@ -31,6 +31,7 @@ namespace SteamBot
             public TradeStatus(SteamID sid){
                 id=sid;
                 inited=false;
+                ready=false;
             }
 
             private SteamID id;
